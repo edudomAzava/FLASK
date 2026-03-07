@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="posts-container">
+    <h1 class="page-title">Последние публикации</h1>
+    
+    {% if posts %}
+        {% for post in posts %}
+        <article class="post-card">
+            <div class="post-header">
+                <h2 class="post-title">{{ post.title }}</h2>
+                <span class="post-date">{{ post.created_at.strftime('%d %B %Y') }}</span>
+            </div>
+            <div class="post-content">
+                {{ post.content|striptags|truncate(200) }}
+            </div>
+            <div class="post-meta">
+                <span class="post-author">Автор: {{ post.author.name }}</span>
+                <a href="{{ url_for('view_post', post_id=post.id) }}" class="read-more">Читать далее →</a>
+            </div>
+        </article>
+        {% endfor %}
+    {% else %}
+        <div class="no-posts">
+            <h3>Пока нет ни одного поста</h3>
+            <p>Будьте первым, кто поделится своими мыслями!</p>
+            {% if 'user_login' in session %}
+            <a href="{{ url_for('create_post') }}" class="btn-primary">Создать пост</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

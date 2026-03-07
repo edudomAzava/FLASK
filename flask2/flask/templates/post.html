@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} — Wizzar{% endblock %}
+
+{% block content %}
+<div class="post-detail-container">
+    <article class="post-detail">
+        <div class="post-detail-header">
+            <h1 class="post-detail-title">{{ post.title }}</h1>
+            <div class="post-detail-meta">
+                <span class="post-author">
+                    <span class="author-icon">👤</span>
+                    {{ post.author.name }}
+                </span>
+                <span class="post-date">
+                    <span class="date-icon">📅</span>
+                    {{ post.created_at.strftime('%d %B %Y, %H:%M') }}
+                </span>
+                {% if post.created_at != post.updated_at %}
+                <span class="post-updated">
+                    <span class="update-icon">✏️</span>
+                    Обновлено: {{ post.updated_at.strftime('%d %B %Y, %H:%M') }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if post.image_path %}
+            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image">
+        {% endif %}
+
+        <div class="post-detail-content">
+            {{ post.content|nl2br|safe }}
+        </div>
+
+        <div class="post-detail-actions">
+            {% if 'user_login' in session and session.get('user_id') == post.user_id %}
+            <div class="post-actions-buttons">
+                <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn-secondary">✏️ Редактировать</a>
+                <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" class="delete-form" onsubmit="return confirm('⚠️ Вы уверены, что хотите удалить этот пост?\nЭто действие нельзя отменить!')">
+                    <button type="submit" class="btn-danger">🗑️ Удалить</button>
+                </form>
+            </div>
+            {% endif %}
+            
+            <a href="{{ url_for('index') }}" class="btn-back">← Вернуться к постам</a>
+        </div>
+    </article>
+</div>
+
+<style>
+
+</style>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="avatar-placeholder"></div>
+        <h1>{{ user.name }}</h1>
+        <p class="user.login">@{{ user.login }}</p>
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat-item">
+            <span class="stat-value">24</span>
+            <span class="stat-label">Постов</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">156</span>
+            <span class="stat-label">Подписчиков</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">38</span>
+            <span class="stat-label">Подписок</span>
+        </div>
+    </div>
+
+    <div class="profile-info">
+        <h2>Информация о пользователе</h2>
+        <div class="info-row">
+            <span class="info-label">Пол:</span>
+            <span class="info-value">{{ user.gender }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Дата регистрации:</span>
+            <span class="info-value">23 ноября 2025</span>
+        </div>
+    </div>
+
+    
+
+    <a href="/profile/edit" class="btn-secondary">Редактировать профиль</a>
+</div>
+{% endblock %}

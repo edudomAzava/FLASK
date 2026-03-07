@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <h1 class="page-title">Редактирование профиля</h1>
+    
+    <form method="POST" class="edit-profile-form">
+        <div class="form-group">
+            <label for="login">Логин (нельзя изменить)</label>
+            <input type="text" id="login" value="{{ user.login }}" disabled>
+        </div>
+        
+        <div class="form-group">
+            <label for="name">Имя</label>
+            <input type="text" id="name" name="name" value="{{ user.name }}" required minlength="2">
+        </div>
+        
+        <div class="form-group">
+            <label for="gender">Пол</label>
+            <select id="gender" name="gender">
+                {% if user.gender == 'male' %}
+                    <option value="male"  selected >Мужской</option>
+                    <option value="female" >Женской</option>
+                {% elif user.gender == 'female'%}
+                    <option value="male"  >Мужской</option>
+                    <option value="female" selected >Женской</option>
+                {% endif %}
+            </select>
+        </div>
+        
+        
+        <div class="form-group">
+            <label for="new_password">Новый пароль(оставьте пустым, если не хотите менять)</label>
+            <input type="password" id="new_password" name="new_password" minlength="6">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password">Подтвердите пароль</label>
+            <input type="password" id="confirm_password" name="confirm_password">
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Сохранить изменения</button>
+            <a href="{{ url_for('profile') }}" class="btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
