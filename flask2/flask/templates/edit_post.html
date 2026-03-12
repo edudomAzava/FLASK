@@ -27,7 +27,7 @@
             <div class="error-message" id="titleError"></div>
         </div>
 
-        <!-- Содержание поста -->
+        <!-- Содержание поста с TinyMCE -->
         <div class="form-group">
             <label for="content" class="form-label">Содержание поста</label>
             <textarea 
@@ -72,6 +72,98 @@
         </div>
     </form>
 </div>
+
+<!-- ✅ Подключаем TinyMCE -->
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
+<script>
+// Инициализация TinyMCE с тёмной темой
+tinymce.init({
+    selector: '#content',
+    height: 450,
+    menubar: false,
+    branding: false,
+    skin: 'oxide-dark',
+    content_css: 'dark',
+    plugins: 'image link table code preview lists emoticons',
+    toolbar: 'undo redo | styleselect | bold italic underline strikethrough | ' +
+             'alignleft aligncenter alignright alignjustify | ' +
+             'bullist numlist | code preview | removeformat',
+    
+    // Настройки заголовков
+    style_formats: [
+        { title: 'Заголовок 1', format: 'h1' },
+        { title: 'Заголовок 2', format: 'h2' },
+        { title: 'Заголовок 3', format: 'h3' },
+        { title: 'Обычный текст', format: 'p' },
+        { title: 'Цитата', format: 'blockquote' },
+        { title: 'Код', format: 'code' }
+    ],
+    
+    // Обработка изображений внутри редактора
+    image_title: true,
+    automatic_uploads: false,
+    file_picker_types: 'image',
+    
+    file_picker_callback: function(cb, value, meta) {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Пожалуйста, выберите изображение');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Изображение слишком большое (макс. 5MB)');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.addEventListener('load', function() {
+                // Создаём blob для TinyMCE
+                const id = 'blobid' + (new Date()).getTime();
+                const blobCache = tinymce.activeEditor.editorUpload.blobCache;
+                const base64 = reader.result.split(',')[1];
+                
+                const blobInfo = blobCache.create(id, file, base64);
+                blobCache.add(blobInfo);
+                
+                // Возвращаем URL в редактор
+                cb(blobInfo.blobUri(), { title: file.name });
+            });
+            reader.readAsDataURL(file);
+        });
+        
+        input.click();
+    },
+    
+    // Счётчик символов при изменении
+    setup: function(editor) {
+        editor.on('change keyup undo redo', function() {
+            updateCharCount();
+        });
+    }
+});
+
+// Счётчик символов (без HTML-тегов)
+function updateCharCount() {
+    const content = tinymce.get('content')?.getContent() || '';
+    const text = content.replace(/<[^>]*>/g, '').trim();
+    document.getElementById('contentCounter').textContent = text.length + ' символов';
+}
+
+// Счётчик заголовка
+document.getElementById('title')?.addEventListener('input', function() {
+    document.getElementById('titleCounter').textContent = this.value.length + '/50';
+});
+
+// Инициализация счётчика при загрузке
+window.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+});
+</script>
 
 <style>
 .edit-post-container {
@@ -314,6 +406,17 @@
     transform: none !important;
 }
 
+/* Стили для TinyMCE */
+.tox-tinymce {
+    border-radius: 14px !important;
+    border: 1px solid #3a3a3a !important;
+}
+
+.tox .tox-toolbar {
+    background: rgba(30, 30, 30, 0.9) !important;
+    border-bottom: 1px solid #3a3a3a !important;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .edit-post-container {
@@ -370,25 +473,6 @@ titleInput.addEventListener('input', function() {
     }
 });
 
-// Счетчик символов для содержания
-const contentInput = document.getElementById('content');
-const contentCounter = document.getElementById('contentCounter');
-const contentError = document.getElementById('contentError');
-
-contentInput.addEventListener('input', function() {
-    const length = this.value.length;
-    const ending = getWordEnding(length, 'символ', 'символа', 'символов');
-    contentCounter.textContent = `${length} ${ending}`;
-    contentCounter.style.color = length > 500 ? '#FF6F00' : '#888';
-    
-    // Валидация в реальном времени
-    if (length > 0 && length < 10) {
-        showError(contentError, 'Содержание должно быть минимум 10 символов');
-    } else {
-        hideError(contentError);
-    }
-});
-
 // Функция для склонения слов
 function getWordEnding(number, one, two, five) {
     let n = Math.abs(number) % 100;
@@ -425,9 +509,13 @@ form.addEventListener('submit', function(e) {
         isValid = false;
     }
     
-    // Валидация содержания
-    if (contentInput.value.length < 10) {
-        showError(contentError, 'Содержание должно быть минимум 10 символов');
+    // Валидация содержания (получаем из TinyMCE)
+    const contentEditor = tinymce.get('content');
+    const content = contentEditor ? contentEditor.getContent() : '';
+    const contentText = content.replace(/<[^>]*>/g, '').trim();
+    
+    if (contentText.length < 10) {
+        showError(titleError, 'Содержание должно быть минимум 10 символов');
         isValid = false;
     }
     
@@ -452,13 +540,11 @@ deleteBtn.addEventListener('click', function() {
 
 // Очистка ошибок при фокусе
 titleInput.addEventListener('focus', () => hideError(titleError));
-contentInput.addEventListener('focus', () => hideError(contentError));
 
 // Проверка на изменения перед уходом со страницы
 let formChanged = false;
 
 titleInput.addEventListener('input', () => formChanged = true);
-contentInput.addEventListener('input', () => formChanged = true);
 
 window.addEventListener('beforeunload', function(e) {
     if (formChanged) {

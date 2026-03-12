@@ -412,9 +412,7 @@ input[type="password"]:focus {
     margin-bottom: 1.5rem;
 }
 
-.avatar-placeholder::after {
-    content: '🚀';
-}
+
 
 .user-login {
     color: var(--light-orange);
@@ -1013,6 +1011,7 @@ footer {
     display: inline-block;
     margin: 0;
 }
+
 
 /* Адаптивность */
 @media (max-width: 768px) {

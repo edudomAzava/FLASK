@@ -8,10 +8,21 @@
         <div class="post-detail-header">
             <h1 class="post-detail-title">{{ post.title }}</h1>
             <div class="post-detail-meta">
-                <span class="post-author">
-                    <span class="author-icon">👤</span>
-                    {{ post.author.name }}
-                </span>
+                {%if 'user_login' not in session or session.get('user_id') != post.author.id%}
+                    <a href="{{ url_for('view_user_profile', user_id=post.author.id) }}" class="post-author-link">
+                        <div class="author-badge">
+                            <span class="author-icon">👤</span>
+                            <span class="author-name">{{ post.author.name }}</span>
+                        </div>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('profile') }}" class="post-author-link">
+                        <div class="author-badge">
+                            <span class="author-icon">👤</span>
+                            <span class="author-name">{{ post.author.name }}</span>
+                        </div>
+                    </a>
+                {% endif %}
                 <span class="post-date">
                     <span class="date-icon">📅</span>
                     {{ post.created_at.strftime('%d %B %Y, %H:%M') }}
@@ -26,11 +37,27 @@
         </div>
 
         {% if post.image_path %}
-            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image">
+            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image" class="post-image">
         {% endif %}
 
         <div class="post-detail-content">
             {{ post.content|nl2br|safe }}
+        </div>
+
+        <!-- Блок с лайками -->
+        <div class="post-likes-section">
+            <div class="likes-info">
+                <span class="likes-count">❤️ {{ post.likes|length }} лайков</span>
+            </div>
+            {% if 'user_login' in session %}
+            <a href="{{ url_for('toggle_like', post_id=post.id) }}" class="btn-like">
+                    {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
+                        ❤️ Вам нравится
+                    {% else %}
+                        🤍 Нравится
+                    {% endif %}
+            </a>
+            {% endif %}
         </div>
 
         <div class="post-detail-actions">
@@ -46,9 +73,284 @@
             <a href="{{ url_for('index') }}" class="btn-back">← Вернуться к постам</a>
         </div>
     </article>
+
+    <!-- Секция комментариев -->
+    <section class="comments-section">
+        <h2 class="comments-title">Комментарии ({{ post.comments|length }})</h2>
+
+        {% if 'user_login' in session %}
+        <div class="add-comment-form">
+            <h3>Добавить комментарий</h3>
+            <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}">
+                <textarea name="content" placeholder="Ваш комментарий..." required minlength="1" maxlength="1000" rows="4"></textarea>
+                <button type="submit" class="btn-primary">Отправить комментарий</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="login-prompt"><a href="{{ url_for('login') }}">Войдите</a>, чтобы оставить комментарий</p>
+        {% endif %}
+
+        <div class="comments-list">
+            {% if post.comments %}
+                {% for comment in post.comments|reverse %}
+                <div class="comment-item">
+                    <div class="comment-header">
+                        {%if 'user_login' not in session or session.get('user_id') != comment.author.id%}
+                            <a href="{{ url_for('view_user_profile', user_id=comment.author.id) }}" class="comment-author">
+                                {{ comment.author.name }}
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('profile') }}" class="comment-author">
+                                {{ comment.author.name }}
+                            </a>
+                        {% endif %}
+                        <span class="comment-date">{{ comment.created_at.strftime('%d %B %Y, %H:%M') }}</span>
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                    {% if 'user_login' in session and session.get('user_id') == comment.user_id %}
+                    <div class="comment-actions">
+                        <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" class="delete-comment-form" onsubmit="return confirm('Удалить комментарий?')">
+                            <button type="submit" class="btn-delete-comment">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <p class="no-comments">Комментариев пока нет. Будьте первым!</p>
+            {% endif %}
+        </div>
+    </section>
 </div>
 
 <style>
+    .post-likes-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 15px 0;
+        border-top: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        margin: 20px 0;
+    }
 
+    .likes-info {
+        flex: 1;
+    }
+
+    .likes-count {
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    /* Стиль для имени автора */
+    .post-author-link {
+        text-decoration: none;
+        transition: transform 0.2s ease;
+        display: inline-block;
+    }
+
+    .author-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(255, 111, 0, 0.1), rgba(255, 152, 0, 0.1));
+        padding: 6px 15px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 111, 0, 0.3);
+        color: #FFA726;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .post-author-link:hover .author-badge {
+        background: linear-gradient(135deg, rgba(255, 111, 0, 0.2), rgba(255, 152, 0, 0.2));
+        border-color: #FF6F00;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 111, 0, 0.2);
+    }
+
+    .author-icon {
+        font-size: 14px;
+    }
+
+    .author-name {
+        font-size: 15px;
+    }
+
+    .like-form {
+        display: inline;
+    }
+
+    .btn-like {
+        padding: 8px 16px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        
+    }
+
+    .btn-like:hover {
+        background-color: #ffe0e0;
+        border-color: #ff6b6b;
+    }
+
+    .btn-like.active {
+        background-color: #ff6b6b;
+        color: white;
+        border-color: #ff6b6b;
+    }
+
+    .comments-section {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    .comments-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .add-comment-form {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .add-comment-form h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+
+    .add-comment-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+    }
+
+    .add-comment-form button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .add-comment-form button:hover {
+        background-color: #0056b3;
+    }
+
+    .login-prompt {
+        padding: 15px;
+        background-color: white;
+        border-radius: 5px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .login-prompt a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .login-prompt a:hover {
+        text-decoration: underline;
+    }
+
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .comment-item {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 3px solid #007bff;
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .comment-author {
+        font-weight: 600;
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .comment-author:hover {
+        text-decoration: underline;
+    }
+
+    .comment-date {
+        font-size: 12px;
+        color: #999;
+    }
+
+    .comment-content {
+        color: #333;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .comment-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .delete-comment-form {
+        display: inline;
+    }
+
+    .btn-delete-comment {
+        padding: 5px 10px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-delete-comment:hover {
+        background-color: #ffe0e0;
+        border-color: #ff6b6b;
+    }
+
+    .no-comments {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+    }
+
+    .post-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
 </style>
 {% endblock %}
