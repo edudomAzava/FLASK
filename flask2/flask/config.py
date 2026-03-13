@@ -10,7 +10,6 @@ db_pass = os.environ.get("DATABASE_PASSWORD")
 db_name = os.environ.get("DATABASE_NAME")
 
 
-ssl_ca_param = f"ssl_ca={SSL_CA_PATH.replace('\\', '/')}"
-DATABASE_URI = f'mysql+pymysql://gen_user:GOGlmn3333$$$@496626cb628ae9919fbed983.twc1.net:3306/default_db?{ssl_ca_param}'
+DATABASE_URI = f'mysql+pymysql://gen_user:GOGlmn3333$$$@496626cb628ae9919fbed983.twc1.net:3306/default_db'
 
 SECRET_KEY = 'your_secret_key_here'
