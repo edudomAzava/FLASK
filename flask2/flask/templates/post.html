@@ -46,18 +46,20 @@
 
         <!-- Блок с лайками -->
         <div class="post-likes-section">
+            {% if 'user_login' in session %}
+                <form action="{{ url_for('toggle_like', post_id=post.id) }}" method="POST" class="like-form">
+                    <button type="submit" class="btn-like">
+                        {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
+                            ❤️ Вам нравится
+                        {% else %}
+                            🤍 Нравится
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
             <div class="likes-info">
                 <span class="likes-count">❤️ {{ post.likes|length }} лайков</span>
             </div>
-            {% if 'user_login' in session %}
-            <a href="{{ url_for('toggle_like', post_id=post.id) }}" class="btn-like">
-                    {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
-                        ❤️ Вам нравится
-                    {% else %}
-                        🤍 Нравится
-                    {% endif %}
-            </a>
-            {% endif %}
         </div>
 
         <div class="post-detail-actions">
