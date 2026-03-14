@@ -375,7 +375,8 @@ def delete_comment(comment_id):
     
     return redirect(url_for('view_post', post_id=post_id))
 
+init_db()
 
 if __name__ == '__main__':
-    init_db()
+
     app.run(debug=True)
