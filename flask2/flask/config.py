@@ -1,7 +1,6 @@
 # общие настройки для нашего приложения
 import os
 
-SSL_CA_PATH = str('certs' / 'ca.crt')
 
 db_host = os.environ.get("DATABASE_HOST")
 db_port = os.environ.get("DATABASE_PORT")
