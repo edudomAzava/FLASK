@@ -10,5 +10,7 @@ db_name = os.environ.get("DATABASE_NAME")
 
 
 DATABASE_URI = f'mysql+pymysql://gen_user:GOGlmn3333$$$@496626cb628ae9919fbed983.twc1.net:3306/default_db'
+#DATABASE_URI = f'mysql+pymysql://root:root@localhost/test'
+
 
 SECRET_KEY = 'your_secret_key_here'
